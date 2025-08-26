@@ -527,7 +527,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridx: 10
   gridz: 10
-  loadedPrefab: {fileID: 2636469312503260737, guid: 95009d74728710d42861aaab25efca10, type: 3}
+  rx: 1
+  rz: 1
+  loadedPrefab: {fileID: 1890575343405782451, guid: 01ac5b94203e20740b6fab92c164ba79, type: 3}
   grid: []
 --- !u!1 &1408823032
 GameObject:
@@ -729,7 +731,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8997996947095583982, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -19.35
       objectReference: {fileID: 0}
     - target: {fileID: 8997996947095583982, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       propertyPath: m_LocalRotation.w
