@@ -2,6 +2,8 @@
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
+using Unity.Netcode;
+using Cinemachine;
 
 namespace StarterAssets
 {
@@ -9,7 +11,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
 	[RequireComponent(typeof(PlayerInput))]
 #endif
-	public class FirstPersonController : MonoBehaviour
+	public class FirstPersonController : NetworkBehaviour
 	{
 		[Header("Player")]
 		[Tooltip("Move speed of the character in m/s")]
@@ -45,7 +47,11 @@ namespace StarterAssets
 
 		[Header("Cinemachine")]
 		[Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
-		public GameObject CinemachineCameraTarget;
+		public CinemachineVirtualCamera playerVirtualCamera;
+
+		[Tooltip("The target object that the vCam will follow and rotate (usually a child of the player, like the camera pivot)")]
+		[SerializeField] private Transform cinemachineCameraTarget;
+
 		[Tooltip("How far in degrees can you move the camera up")]
 		public float TopClamp = 90.0f;
 		[Tooltip("How far in degrees can you move the camera down")]
@@ -72,7 +78,10 @@ namespace StarterAssets
 		private StarterAssetsInputs _input;
 		private GameObject _mainCamera;
 
+
 		private const float _threshold = 0.01f;
+
+
 
 		private bool IsCurrentDeviceMouse
 		{
@@ -85,33 +94,49 @@ namespace StarterAssets
 				#endif
 			}
 		}
-
-		private void Awake()
+		public override void OnNetworkSpawn()
 		{
-			// get a reference to our main camera
-			if (_mainCamera == null)
-			{
-				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
-			}
-		}
-
-		private void Start()
-		{
+			// Cache components
 			_controller = GetComponent<CharacterController>();
 			_input = GetComponent<StarterAssetsInputs>();
+
 #if ENABLE_INPUT_SYSTEM
 			_playerInput = GetComponent<PlayerInput>();
-#else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+
+			// Activate input only for the local owner
+			if (IsOwner && _playerInput != null)
+			{
+				_playerInput.ActivateInput();
+			}
 #endif
 
-			// reset our timeouts on start
+			// Reset jump/fall timeouts
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
+
+			if (IsOwner)
+			{
+				// Enable local player's Cinemachine virtual camera
+				if (playerVirtualCamera != null && cinemachineCameraTarget != null)
+				{
+					playerVirtualCamera.enabled = true;
+					playerVirtualCamera.Follow = cinemachineCameraTarget;
+					playerVirtualCamera.LookAt = cinemachineCameraTarget;
+				}
+			}
+			else
+			{
+				// Disable other players' virtual cameras
+				if (playerVirtualCamera != null)
+				{
+					playerVirtualCamera.enabled = false;
+				}
+			}
 		}
 
 		private void Update()
 		{
+			if (!IsOwner){ return; }
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
@@ -119,6 +144,7 @@ namespace StarterAssets
 
 		private void LateUpdate()
 		{
+			if (!IsOwner){ return; }
 			CameraRotation();
 		}
 
@@ -136,15 +162,18 @@ namespace StarterAssets
 			{
 				//Don't multiply mouse input by Time.deltaTime
 				float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
-				
+
 				_cinemachineTargetPitch += _input.look.y * RotationSpeed * deltaTimeMultiplier;
 				_rotationVelocity = _input.look.x * RotationSpeed * deltaTimeMultiplier;
 
 				// clamp our pitch rotation
 				_cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-				// Update Cinemachine camera target pitch
-				CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch, 0.0f, 0.0f);
+				// ✅ Update Cinemachine camera target pitch
+				if (cinemachineCameraTarget != null)
+				{
+					cinemachineCameraTarget.localRotation = Quaternion.Euler(_cinemachineTargetPitch, 0.0f, 0.0f);
+				}
 
 				// rotate the player left and right
 				transform.Rotate(Vector3.up * _rotationVelocity);
@@ -253,6 +282,8 @@ namespace StarterAssets
 			return Mathf.Clamp(lfAngle, lfMin, lfMax);
 		}
 
+
+		// This section can be removed, it has no references
 		private void OnDrawGizmosSelected()
 		{
 			Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);

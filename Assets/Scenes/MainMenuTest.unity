@@ -179,7 +179,6 @@ MonoBehaviour:
   heldObjects:
   - {fileID: 2082135117}
   - {fileID: 597449340}
-  - {fileID: 692292779}
 --- !u!1 &692292779
 GameObject:
   m_ObjectHideFlags: 0
