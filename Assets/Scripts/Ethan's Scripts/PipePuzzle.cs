@@ -92,7 +92,6 @@ public class PipePuzzle : MonoBehaviour
 
     public void initPipeState(PipeSection sec)
     {
-        sec.numConn = 0;
         sec.accessed = false;
         foreach (Transform child in sec.transform)
         {
@@ -102,12 +101,6 @@ public class PipePuzzle : MonoBehaviour
 
         GameObject BasePlate = sec.transform.GetChild(0).gameObject;
         BasePlate.SetActive(true);
-
-        //Temp start and end values might have a different visual object to represent
-        if (sec.isEnd || sec.isStart)
-        {
-            sec.numConn = 1;
-        }
 
         updateState(sec);
     }
@@ -134,6 +127,7 @@ public class PipePuzzle : MonoBehaviour
                 //Set position
                 grid[idx].transform.position = origin + new Vector3(rx*j, 0, rz*i);
                 PipeSection sec = grid[idx].GetComponent<PipeSection>();
+                sec.numConn = 0;
 
                 initPipeState(sec);
             }
@@ -141,26 +135,33 @@ public class PipePuzzle : MonoBehaviour
 
         PipeSection firstgrid = grid[0].GetComponent<PipeSection>();
         firstgrid.isStart = true;
+        firstgrid.numConn = 1;
+        initPipeState(firstgrid);
 
         PipeSection lastgrid = grid[gridx * gridz - 1].GetComponent<PipeSection>();
-        lastgrid.isEnd = true;  
+        lastgrid.isEnd = true;
+        lastgrid.numConn = 1;
+        initPipeState(lastgrid);
     }
 
     //Depth-First search of the arrays
     public bool DFS(PipeSection pipe, int grididx, int depth)
     {
+        pipe.accessed = true;
         if (pipe.isEnd)
         {
             return true;
         }
 
-        pipe.accessed = true;
+        Debug.Log("List: " + string.Join(" ", pipe.conn));
 
         //North
         if (grididx >= gridz && pipe.conn.Contains(0))
         {
+            //Debug.Log("grididx: " + grididx.ToString() + " Current Connects North");
             GameObject north = grid[grididx - gridz];   
             PipeSection northPS = north.GetComponent<PipeSection>();
+            //Debug.Log("North Pipe List: " + "List: " + string.Join(" ", northPS.conn));
 
             if (northPS.accessed == false && northPS.conn.Contains(2))
             {
@@ -169,8 +170,9 @@ public class PipePuzzle : MonoBehaviour
 
         }
         //East
-        if ((grididx+1)%gridx == 0 && pipe.conn.Contains(1))
+        if ((grididx+1)%gridz != 0 && pipe.conn.Contains(1))
         {
+            Debug.Log("grididx: " + grididx.ToString() + " Current Connects East");
             GameObject east = grid[grididx + 1];
             PipeSection eastPS = east.GetComponent<PipeSection>();  
 
@@ -181,10 +183,14 @@ public class PipePuzzle : MonoBehaviour
         }
 
         //South
-        if (grididx >= (gridz-1)*gridx && pipe.conn.Contains(2))
+        if (grididx <= (gridx*gridz-1)-gridz && pipe.conn.Contains(2))
         {
+            Debug.Log("grididx: " + grididx.ToString() + " Current Connects South");
             GameObject south = grid[grididx + gridz];
             PipeSection southPS = south.GetComponent<PipeSection>();
+
+            Debug.Log("South List: " + string.Join(" ", southPS.conn));
+            south.SetActive(false);
 
             if (southPS.accessed == false && southPS.conn.Contains(0))
             {
@@ -193,8 +199,9 @@ public class PipePuzzle : MonoBehaviour
         }
 
         //West
-        if (grididx % gridx == 0 && pipe.conn.Contains(3))
+        if (grididx % gridx != 0 && pipe.conn.Contains(3))
         {
+            Debug.Log("grididx: " + grididx.ToString() + " Current Connects West");
             GameObject west = grid[grididx - 1];
             PipeSection westPS = west.GetComponent<PipeSection>();
 
@@ -234,28 +241,29 @@ public class PipePuzzle : MonoBehaviour
                         for(int j = 0; j < gridx; j++)
                         {
                             int idx = i * gridz + j;
-                            if (grid[idx].GetComponent<PipeSection>().isStart)
+                            PipeSection tmp = grid[idx].GetComponent<PipeSection>();
+                            if (tmp.isStart)
                             {
                                 startObj = grid[idx];
                                 finalidx = idx;
-                                break;
-                            }
-                        }
-                        if (startObj != null)
-                        {
-                            if (DFS(startObj.GetComponent<PipeSection>(), finalidx, 0))
-                            {
-                                Debug.Log("Found End!");
-                            }
-                            else
-                            {
-                                Debug.Log("No link to End!");
                             }
 
-                            break;
+                            tmp.accessed = false; //Update all accesses for DFS to false to restart
+                        }
+                      
+                    }
+                    if (startObj != null)
+                    {
+                        if (DFS(startObj.GetComponent<PipeSection>(), finalidx, 0))
+                        {
+                            Debug.Log("Found End!");
+                        }
+                        else
+                        {
+                            Debug.Log("No link to End!");
                         }
                     }
-                    if (startObj == null)
+                    else
                     {
                         Debug.Log("Error: Couldn't find start pipe");
                     }
