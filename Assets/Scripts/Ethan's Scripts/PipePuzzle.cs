@@ -7,6 +7,13 @@ using Unity.VisualScripting;
 using UnityEditor.Animations;
 using UnityEngine;
 
+/*
+ * 
+ *  TODO: Place straight pipes as based on player direction facings and turning pipes
+ *        
+ * 
+ */
+
 public class PipePuzzle : MonoBehaviour
 {
     [SerializeField] public Camera playerCamera; 
@@ -87,7 +94,6 @@ public class PipePuzzle : MonoBehaviour
                 break;
         }
 
-        Debug.Log(string.Join(" ", sec.conn));
     }
 
     public void initPipeState(PipeSection sec)
@@ -153,8 +159,8 @@ public class PipePuzzle : MonoBehaviour
             return true;
         }
 
-        Debug.Log("GridID: " + grididx.ToString());
-        Debug.Log("List: " + string.Join(" ", pipe.conn));
+        //Debug.Log("GridID: " + grididx.ToString());
+        //Debug.Log("List: " + string.Join(" ", pipe.conn));
 
         //North
         if (grididx >= gridx && pipe.conn.Contains(0))
@@ -173,7 +179,7 @@ public class PipePuzzle : MonoBehaviour
         //East
         if ((grididx + 1) % gridx != 0 && pipe.conn.Contains(1))
         {
-            Debug.Log("grididx: " + grididx.ToString() + " Current Connects East");
+            //Debug.Log("grididx: " + grididx.ToString() + " Current Connects East");
             GameObject east = grid[grididx + 1];
             PipeSection eastPS = east.GetComponent<PipeSection>();  
 
@@ -186,11 +192,11 @@ public class PipePuzzle : MonoBehaviour
         //South
         if (grididx <= (gridx * gridz - 1) - gridx && pipe.conn.Contains(2))
         {
-            Debug.Log("grididx: " + grididx.ToString() + " Current Connects South");
+            //Debug.Log("grididx: " + grididx.ToString() + " Current Connects South");
             GameObject south = grid[grididx + gridx];
             PipeSection southPS = south.GetComponent<PipeSection>();
 
-            Debug.Log("South List: " + string.Join(" ", southPS.conn));
+            //Debug.Log("South List: " + string.Join(" ", southPS.conn));
 
             if (southPS.accessed == false && southPS.conn.Contains(0))
             {
@@ -201,7 +207,7 @@ public class PipePuzzle : MonoBehaviour
         //West
         if (grididx % gridx != 0 && pipe.conn.Contains(3))
         {
-            Debug.Log("grididx: " + grididx.ToString() + " Current Connects West");
+            //Debug.Log("grididx: " + grididx.ToString() + " Current Connects West");
             GameObject west = grid[grididx - 1];
             PipeSection westPS = west.GetComponent<PipeSection>();
 
@@ -257,6 +263,25 @@ public class PipePuzzle : MonoBehaviour
                         if (DFS(startObj.GetComponent<PipeSection>(), finalidx, 0))
                         {
                             Debug.Log("Found End!");
+                            //Create Hinge Joint on the door
+                            GameObject giantDoor = GameObject.Find("Giant-Door");
+                            HingeJoint hj = giantDoor.AddComponent<HingeJoint>();
+                            hj.autoConfigureConnectedAnchor = true;
+                            hj.anchor = new Vector3(0.0f, 1.0f, -0.5f);
+                            hj.connectedAnchor = new Vector3(-46.7f, 30.57f, -27.3f);
+                            hj.axis = new Vector3(1.0f, 0.0f, 0.0f);
+                            hj.useMotor = true;
+                            hj.useLimits = true;
+
+                            JointMotor jm = new JointMotor();
+                            jm.targetVelocity = 20.0f;
+                            jm.force = 20.0f;
+                            hj.motor = jm;
+
+                            JointLimits jl = new JointLimits();
+                            jl.min = 0.0f;
+                            jl.max = 90.0f;
+                            hj.limits = jl;
                         }
                         else
                         {
