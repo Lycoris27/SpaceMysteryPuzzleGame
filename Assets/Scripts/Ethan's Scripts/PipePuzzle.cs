@@ -87,7 +87,7 @@ public class PipePuzzle : MonoBehaviour
                 break;
         }
 
-        //Debug.Log(string.Join(" ", sec.conn));
+        Debug.Log(string.Join(" ", sec.conn));
     }
 
     public void initPipeState(PipeSection sec)
@@ -116,16 +116,16 @@ public class PipePuzzle : MonoBehaviour
 
         grid = new GameObject[gridx * gridz];
 
-        for(int i = 0; i < gridz; i++)
+        for(int i = 0; i < gridx; i++)
         {
-            for(int j = 0; j < gridx; j++)
+            for(int j = 0; j < gridz; j++)
             { 
-                int idx = i * gridz + j;
+                int idx = i * gridx + j;
                 GameObject newObj = GameObject.Instantiate(loadedPrefab);
                 grid[idx] = newObj;
 
                 //Set position
-                grid[idx].transform.position = origin + new Vector3(rx*j, 0, rz*i);
+                grid[idx].transform.position = origin + new Vector3(rx*i, 0, rz*j);
                 PipeSection sec = grid[idx].GetComponent<PipeSection>();
                 sec.numConn = 0;
 
@@ -153,13 +153,14 @@ public class PipePuzzle : MonoBehaviour
             return true;
         }
 
+        Debug.Log("GridID: " + grididx.ToString());
         Debug.Log("List: " + string.Join(" ", pipe.conn));
 
         //North
-        if (grididx >= gridz && pipe.conn.Contains(0))
+        if (grididx >= gridx && pipe.conn.Contains(0))
         {
             //Debug.Log("grididx: " + grididx.ToString() + " Current Connects North");
-            GameObject north = grid[grididx - gridz];   
+            GameObject north = grid[grididx - gridx];   
             PipeSection northPS = north.GetComponent<PipeSection>();
             //Debug.Log("North Pipe List: " + "List: " + string.Join(" ", northPS.conn));
 
@@ -170,7 +171,7 @@ public class PipePuzzle : MonoBehaviour
 
         }
         //East
-        if ((grididx+1)%gridz != 0 && pipe.conn.Contains(1))
+        if ((grididx + 1) % gridx != 0 && pipe.conn.Contains(1))
         {
             Debug.Log("grididx: " + grididx.ToString() + " Current Connects East");
             GameObject east = grid[grididx + 1];
@@ -183,14 +184,13 @@ public class PipePuzzle : MonoBehaviour
         }
 
         //South
-        if (grididx <= (gridx*gridz-1)-gridz && pipe.conn.Contains(2))
+        if (grididx <= (gridx * gridz - 1) - gridx && pipe.conn.Contains(2))
         {
             Debug.Log("grididx: " + grididx.ToString() + " Current Connects South");
-            GameObject south = grid[grididx + gridz];
+            GameObject south = grid[grididx + gridx];
             PipeSection southPS = south.GetComponent<PipeSection>();
 
             Debug.Log("South List: " + string.Join(" ", southPS.conn));
-            south.SetActive(false);
 
             if (southPS.accessed == false && southPS.conn.Contains(0))
             {
