@@ -10,8 +10,9 @@ using UnityEngine;
 /*
  * 
  *  TODO: Place straight pipes as based on player direction facings and turning pipes
- *        
- * 
+ *        Fixed pipes and hidden pipes to make it more difficult
+ *        Make a random path connecting start and end -> fix some tiles delete others
+ *        then make some others random but changable. 
  */
 
 public class PipePuzzle : MonoBehaviour
@@ -33,9 +34,17 @@ public class PipePuzzle : MonoBehaviour
             sec.transform.GetChild(0).gameObject.SetActive(true);
         }
 
-        sec.activeObj = sec.transform.GetChild(sec.numConn).gameObject;
-        sec.activeObj.SetActive(true);
-
+        if (sec.isEnd || sec.isStart) 
+        {
+            sec.activeObj = sec.transform.GetChild(5).gameObject;
+            sec.activeObj.SetActive(true);
+            sec.numConn = 4;
+        }
+        else
+        { 
+            sec.activeObj = sec.transform.GetChild(sec.numConn).gameObject;
+            sec.activeObj.SetActive(true);
+        }
         //Reset rotation
         sec.rot = 0.0f;
         updateRot(sec);
@@ -134,6 +143,7 @@ public class PipePuzzle : MonoBehaviour
                 grid[idx].transform.position = origin + new Vector3(rx*i, 0, rz*j);
                 PipeSection sec = grid[idx].GetComponent<PipeSection>();
                 sec.numConn = 0;
+                sec.locked = false;
 
                 initPipeState(sec);
             }
@@ -232,9 +242,12 @@ public class PipePuzzle : MonoBehaviour
                 if (hit.collider.gameObject.name == "Base-Plate")
                 {
                     PipeSection par = hit.collider.gameObject.GetComponentInParent<PipeSection>();
-                    par.numConn += 1;
-                    if (par.numConn > 4) par.numConn = 0; //5 different pipes reset after 5th
-                    updateState(par);
+                    if (!par.locked)
+                    {
+                        par.numConn += 1;
+                        if (par.numConn > 4) par.numConn = 0; //5 different pipes reset after 5th
+                        updateState(par);
+                    }
                 }
 
                 if (hit.collider.gameObject.name == "Pressure-Button")
@@ -306,9 +319,12 @@ public class PipePuzzle : MonoBehaviour
                 if (hit.collider.gameObject.name == "Base-Plate")
                 {
                     PipeSection par = hit.collider.gameObject.GetComponentInParent<PipeSection>();
-                    par.rot += 90.0f;
-                    if (par.rot > 270.0f) par.rot = 0.0f; //4 directions reset after 3rd
-                    updateRot(par);
+                    if (!par.locked)
+                    {
+                        par.rot += 90.0f;
+                        if (par.rot > 270.0f) par.rot = 0.0f; //4 directions reset after 3rd
+                        updateRot(par);
+                    }
                 }
             }
         }

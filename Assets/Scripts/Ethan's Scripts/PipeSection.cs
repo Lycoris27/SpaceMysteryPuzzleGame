@@ -12,4 +12,5 @@ public class PipeSection : MonoBehaviour
     [SerializeField] public float rot;
     [SerializeField] public List<int> conn;
     [SerializeField] public bool accessed; //for DFS
+    [SerializeField] public bool locked; //for Locking specific pipes
 }
