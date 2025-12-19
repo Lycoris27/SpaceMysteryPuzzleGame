@@ -6,13 +6,24 @@ using Unity.Services.Core;
 using Unity.VisualScripting;
 using UnityEditor.Animations;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 /*
  * 
  *  TODO: Place straight pipes as based on player direction facings and turning pipes
- *        Fixed pipes and hidden pipes to make it more difficult
+ *        Fixed pipes and hidden pipes to make it more difficult (Maybe just hidden pipes)
+ *        - If attaches to the DFS set to visible if visited
  *        Make a random path connecting start and end -> fix some tiles delete others
  *        then make some others random but changable. 
+ *        Multiple endpoints e.g. going for different doors etc
+ *        
+ *        
+ *        Solution DFS:
+ *        - The tile can't be locked unless it is in the solution state
+ *        - Hidden tiles are revealed when they are reached via a depth-first search (no-matter if the solution is found or not)
+ *        - Variable for a solution tile saying it is one for different functionality with the locked
+ *        - Need a list of endpoints which can be tied to different outputs
+ *        
  */
 
 public class PipePuzzle : MonoBehaviour
@@ -45,8 +56,9 @@ public class PipePuzzle : MonoBehaviour
             sec.activeObj = sec.transform.GetChild(sec.numConn).gameObject;
             sec.activeObj.SetActive(true);
         }
+
         //Reset rotation
-        sec.rot = 0.0f;
+        //sec.rot = 0.0f;
         updateRot(sec);
     }
 
@@ -142,8 +154,14 @@ public class PipePuzzle : MonoBehaviour
                 //Set position
                 grid[idx].transform.position = origin + new Vector3(rx*i, 0, rz*j);
                 PipeSection sec = grid[idx].GetComponent<PipeSection>();
-                sec.numConn = 0;
+                sec.numConn = Random.Range(0, 4);
+                
+                int tmp = Random.Range(0, 4);
+                sec.rot = tmp * 90.0f;
+
+                tmp = Random.Range(0, 3); //3 is exclusive
                 sec.locked = false;
+                if (tmp == 2) sec.locked = true;
 
                 initPipeState(sec);
             }
